@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Muzyczna Oś Czasu — gra imprezowa</title>
+<style>
+  :root{
+    --bg:#0E0B1E; --panel:#1B1533; --panel2:#241C44;
+    --ink:#F2EFFA; --muted:#8D85AC;
+    --hot:#FF3D8A; --amber:#FFC24B; --ok:#2EE6A8; --bad:#FF5C5C;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100%; overscroll-behavior:none;}
+  body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+  #app{max-width:520px; margin:0 auto; padding:16px 16px 32px; min-height:100vh; display:flex; flex-direction:column;}
+
+  h1{font-size:34px; font-weight:900; letter-spacing:-0.5px; line-height:1.05; margin:8px 0 4px;}
+  h2{font-size:22px; font-weight:800; margin:0 0 6px;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 18px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .brand{font-weight:900; letter-spacing:2px; font-size:12px; color:var(--muted); text-transform:uppercase;}
+  .wake{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px;}
+  .wake .dot{width:8px; height:8px; border-radius:50%; background:var(--bad);}
+  .wake.on .dot{background:var(--ok); box-shadow:0 0 8px var(--ok);}
+
+  .card{background:var(--panel); border-radius:var(--radius); padding:18px; margin-bottom:14px;}
+
+  .btn{display:block; width:100%; border:none; border-radius:16px; padding:17px 18px;
+    font-size:17px; font-weight:800; color:#14102A; background:var(--amber);
+    cursor:pointer; margin-top:10px; transition:transform .08s;}
+  .btn:active{transform:scale(.97);}
+  .btn.hot{background:var(--hot); color:#fff;}
+  .btn.ghost{background:var(--panel2); color:var(--ink);}
+  .btn.ok{background:var(--ok);}
+  .btn.small{padding:11px 14px; font-size:14px; border-radius:12px;}
+  .btn:disabled{opacity:.35;}
+  .row{display:flex; gap:10px;}
+  .row .btn{margin-top:10px;}
+
+  /* setup */
+  .stepper{display:flex; align-items:center; gap:14px; margin:6px 0 14px;}
+  .stepper button{width:54px; height:54px; border-radius:50%; border:none; font-size:26px; font-weight:900;
+    background:var(--panel2); color:var(--ink); cursor:pointer;}
+  .stepper .num{font-size:40px; font-weight:900; min-width:64px; text-align:center;}
+  input[type=text]{width:100%; background:var(--panel2); border:none; border-radius:12px;
+    padding:14px; color:var(--ink); font-size:16px; margin-bottom:8px; font-weight:600;}
+  input[type=text]::placeholder{color:var(--muted);}
+  .opt{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #2c2452;}
+  .opt:last-child{border-bottom:none;}
+  .opt .lbl{font-weight:700; font-size:15px;}
+  .opt .hint{color:var(--muted); font-size:12px; margin-top:2px;}
+  .toggle{width:56px; height:32px; border-radius:16px; background:var(--panel2); border:none; position:relative; cursor:pointer;}
+  .toggle::after{content:""; position:absolute; top:4px; left:4px; width:24px; height:24px; border-radius:50%;
+    background:var(--muted); transition:all .15s;}
+  .toggle.on{background:var(--ok);}
+  .toggle.on::after{left:28px; background:#14102A;}
+  .mini-stepper{display:flex; align-items:center; gap:8px;}
+  .mini-stepper button{width:34px; height:34px; border-radius:10px; border:none; background:var(--panel2);
+    color:var(--ink); font-size:18px; font-weight:900; cursor:pointer;}
+  .mini-stepper span{font-weight:900; font-size:18px; min-width:26px; text-align:center;}
+
+  /* turn banner */
+  .turnbanner{text-align:center; padding:26px 16px;}
+  .turnbanner .who{font-size:38px; font-weight:900; color:var(--amber); margin:6px 0;}
+  .turnbanner .meta{color:var(--muted); font-size:14px;}
+  .tokens{display:inline-flex; gap:5px; margin-top:8px;}
+  .token{width:18px; height:18px; border-radius:50%; background:var(--hot); box-shadow:0 0 6px rgba(255,61,138,.6);}
+
+  /* vinyl + player */
+  .vinyl{width:200px; height:200px; margin:16px auto 8px; border-radius:50%; position:relative;
+    background:repeating-radial-gradient(circle at center, #1a1a1f 0 2px, #26262e 2px 4px);
+    box-shadow:0 10px 40px rgba(0,0,0,.6); animation:spin 3.2s linear infinite; animation-play-state:paused;}
+  .vinyl.playing{animation-play-state:running;}
+  .vinyl::before{content:""; position:absolute; top:50%; left:50%; width:70px; height:70px;
+    transform:translate(-50%,-50%); border-radius:50%; background:var(--hot); z-index:1;}
+  .vinyl .center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:30px; color:#14102A; z-index:2; font-weight:900;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .progress{height:8px; border-radius:4px; background:var(--panel2); margin:14px 4px 4px; overflow:hidden;}
+  .progress > div{height:100%; width:0%; background:linear-gradient(90deg,var(--hot),var(--amber)); border-radius:4px;}
+  .listen-status{text-align:center; color:var(--muted); font-size:13px; margin-top:8px; min-height:18px;}
+
+  .secret{background:var(--panel2); border-radius:14px; padding:16px; text-align:center; margin-top:12px;}
+  .secret .artist{font-size:22px; font-weight:900;}
+  .secret .title{font-size:17px; color:var(--amber); font-weight:700; margin-top:2px;}
+  .warn{background:rgba(255,92,92,.12); border:1px solid rgba(255,92,92,.4); color:#ffb3b3;
+    border-radius:12px; padding:10px 14px; font-size:13px; font-weight:700; text-align:center; margin-bottom:12px;}
+
+  /* timeline */
+  .tl-wrap{overflow-x:auto; padding:14px 4px; -webkit-overflow-scrolling:touch;}
+  .tl{display:flex; align-items:stretch; gap:0; min-width:min-content; padding:4px 8px;}
+  .tl-card{flex:0 0 auto; width:104px; background:var(--panel2); border-radius:14px; padding:10px 8px;
+    text-align:center; border:2px solid #322a5e;}
+  .tl-card .y{font-size:26px; font-weight:900; color:var(--amber);}
+  .tl-card .a{font-size:11px; font-weight:700; margin-top:4px; line-height:1.2;}
+  .tl-card .t{font-size:10px; color:var(--muted); margin-top:2px; line-height:1.2;}
+  .slot{flex:0 0 auto; width:44px; display:flex; align-items:center; justify-content:center;}
+  .slot button{width:36px; height:76px; border-radius:12px; border:2px dashed #4a3f85; background:transparent;
+    color:#8d85ac; font-size:20px; font-weight:900; cursor:pointer;}
+  .slot button.sel{border-style:solid; border-color:var(--hot); background:rgba(255,61,138,.18); color:var(--hot);}
+  .tl-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px;
+    display:flex; justify-content:space-between; padding:0 10px;}
+
+  /* reveal */
+  .reveal{text-align:center; padding:10px 0 4px;}
+  .reveal .bigyear{font-size:72px; font-weight:900; line-height:1;}
+  .reveal .song{font-size:18px; font-weight:800; margin-top:8px;}
+  .reveal .art{color:var(--muted); font-size:15px;}
+  .verdict{font-size:26px; font-weight:900; margin-top:14px;}
+  .verdict.ok{color:var(--ok);} .verdict.bad{color:var(--bad);}
+
+  .scorebar{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .chip{background:var(--panel); border-radius:12px; padding:8px 12px; font-size:13px; font-weight:700;}
+  .chip b{color:var(--amber);}
+  .chip.now{outline:2px solid var(--hot);}
+
+  .confetti{font-size:56px; text-align:center;}
+  .winner{font-size:40px; font-weight:900; color:var(--amber); text-align:center; margin:6px 0;}
+
+  details{background:var(--panel); border-radius:var(--radius); padding:14px 18px; margin-bottom:14px;}
+  summary{font-weight:800; cursor:pointer; font-size:15px;}
+  details p, details li{font-size:13.5px; color:#c9c3e2; line-height:1.5;}
+  .spacer{flex:1;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">🎵 Muzyczna Oś Czasu</div>
+    <div class="wake" id="wake"><span class="dot"></span><span id="wakeTxt">ekran</span></div>
+  </div>
+  <div id="screen"></div>
+</div>
+
+<script>
+/* ============ BAZA UTWORÓW (wykonawca, tytuł, rok) ============ */
+const SONGS = [
+ // Polska — klasyki
+ ["Czesław Niemen","Dziwny jest ten świat",1967],
+ ["Czerwone Gitary","Anna Maria",1968],
+ ["Maryla Rodowicz","Małgośka",1973],
+ ["Anna Jantar","Nic nie może wiecznie trwać",1977],
+ ["Krzysztof Krawczyk","Parostatek",1979],
+ ["Perfect","Autobiografia",1982],
+ ["Lady Pank","Mniej niż zero",1982],
+ ["Republika","Biała flaga",1982],
+ ["Budka Suflera","Jolka, Jolka pamiętasz",1982],
+ ["Maanam","Kocham Cię, kochanie moje",1983],
+ ["Kombi","Słodkiego miłego życia",1984],
+ ["Papa Dance","Nasz Disneyland",1986],
+ ["Kult","Arahja",1988],
+ ["Obywatel G.C.","Nie pytaj o Polskę",1988],
+ ["Lady Pank","Zawsze tam, gdzie ty",1990],
+ ["Bajm","Biała armia",1990],
+ ["IRA","Ona jest ze snu",1991],
+ ["Hey","Teksański",1993],
+ ["Perfect","Niepokonani",1993],
+ ["Edyta Górniak","To nie ja!",1994],
+ ["Varius Manx","Orła cień",1995],
+ ["Boys","Jesteś szalona",1996],
+ ["Elektryczne Gitary","Kiler",1997],
+ ["T.Love","Chłopaki nie płaczą",1997],
+ ["Kayah i Bregović","Śpij kochanie, śpij",1999],
+ ["Golec uOrkiestra","Ściernisco",1999],
+ ["Myslovitz","Długość dźwięku samotności",1999],
+ ["Wilki","Baśka",2002],
+ ["Sistars","Sutra",2003],
+ ["Feel","A gdy jest już ciemno",2007],
+ ["Brodka","W pięciu smakach",2010],
+ ["Enej","Skrzydlate ręce",2011],
+ ["Zakopower","Boso",2011],
+ ["Sylwia Grzeszczak","Małe rzeczy",2011],
+ ["Weekend","Ona tańczy dla mnie",2012],
+ ["Piersi","Bałkanica",2013],
+ ["Margaret","Thank You Very Much",2013],
+ ["Dawid Podsiadło","Trójkąty i kwadraty",2013],
+ ["Akcent","Przez Twe oczy zielone",2014],
+ ["Taco Hemingway","Deszcz na betonie",2015],
+ ["Quebonafide","Bubbletea",2017],
+ ["Dawid Podsiadło","Małomiasteczkowy",2018],
+ ["Męskie Granie Orkiestra","Początek",2018],
+ ["Mata","Patointeligencja",2019],
+ ["Kwiat Jabłoni","Dziś późno pójdę spać",2019],
+ ["sanah","Szampan",2020],
+ ["Smolasty & Doda","Nim zajdzie słońce",2023],
+ // Świat — 60s/70s
+ ["Elvis Presley","Can't Help Falling in Love",1961],
+ ["The Rolling Stones","(I Can't Get No) Satisfaction",1965],
+ ["Simon & Garfunkel","The Sound of Silence",1965],
+ ["The Beach Boys","Good Vibrations",1966],
+ ["Aretha Franklin","Respect",1967],
+ ["The Beatles","Hey Jude",1968],
+ ["John Lennon","Imagine",1971],
+ ["Led Zeppelin","Stairway to Heaven",1971],
+ ["Deep Purple","Smoke on the Water",1972],
+ ["Queen","Bohemian Rhapsody",1975],
+ ["ABBA","Dancing Queen",1976],
+ ["Eagles","Hotel California",1977],
+ ["Bee Gees","Stayin' Alive",1977],
+ ["Boney M.","Rivers of Babylon",1978],
+ ["Gloria Gaynor","I Will Survive",1978],
+ ["Village People","Y.M.C.A.",1978],
+ ["Pink Floyd","Another Brick in the Wall",1979],
+ // 80s
+ ["AC/DC","Back in Black",1980],
+ ["Journey","Don't Stop Believin'",1981],
+ ["Survivor","Eye of the Tiger",1982],
+ ["Toto","Africa",1982],
+ ["Michael Jackson","Billie Jean",1983],
+ ["Eurythmics","Sweet Dreams (Are Made of This)",1983],
+ ["Cyndi Lauper","Girls Just Want to Have Fun",1983],
+ ["Nena","99 Luftballons",1983],
+ ["Madonna","Like a Virgin",1984],
+ ["Queen","I Want to Break Free",1984],
+ ["Wham!","Wake Me Up Before You Go-Go",1984],
+ ["Modern Talking","You're My Heart, You're My Soul",1984],
+ ["Alphaville","Forever Young",1984],
+ ["a-ha","Take On Me",1985],
+ ["Europe","The Final Countdown",1986],
+ ["Bon Jovi","Livin' on a Prayer",1986],
+ ["Whitney Houston","I Wanna Dance with Somebody",1987],
+ ["Rick Astley","Never Gonna Give You Up",1987],
+ ["Guns N' Roses","Sweet Child o' Mine",1987],
+ // 90s
+ ["Depeche Mode","Enjoy the Silence",1990],
+ ["Scorpions","Wind of Change",1991],
+ ["R.E.M.","Losing My Religion",1991],
+ ["Nirvana","Smells Like Teen Spirit",1991],
+ ["Snap!","Rhythm Is a Dancer",1992],
+ ["Whitney Houston","I Will Always Love You",1992],
+ ["Ace of Base","All That She Wants",1992],
+ ["Dr. Alban","It's My Life",1992],
+ ["Haddaway","What Is Love",1993],
+ ["4 Non Blondes","What's Up?",1993],
+ ["Corona","The Rhythm of the Night",1993],
+ ["Rednex","Cotton Eye Joe",1994],
+ ["Coolio","Gangsta's Paradise",1995],
+ ["Oasis","Wonderwall",1995],
+ ["Spice Girls","Wannabe",1996],
+ ["No Doubt","Don't Speak",1996],
+ ["Backstreet Boys","Everybody (Backstreet's Back)",1997],
+ ["Céline Dion","My Heart Will Go On",1997],
+ ["Robbie Williams","Angels",1997],
+ ["Cher","Believe",1998],
+ ["Britney Spears","...Baby One More Time",1998],
+ ["Eiffel 65","Blue (Da Ba Dee)",1999],
+ ["Ricky Martin","Livin' la Vida Loca",1999],
+ ["Lou Bega","Mambo No. 5",1999],
+ ["Vengaboys","Boom, Boom, Boom, Boom!!",1999],
+ // 2000s
+ ["Linkin Park","In the End",2000],
+ ["Kylie Minogue","Can't Get You Out of My Head",2001],
+ ["Shakira","Whenever, Wherever",2001],
+ ["Eminem","Lose Yourself",2002],
+ ["Las Ketchup","The Ketchup Song (Aserejé)",2002],
+ ["OutKast","Hey Ya!",2003],
+ ["Beyoncé","Crazy in Love",2003],
+ ["Black Eyed Peas","Where Is the Love?",2003],
+ ["O-Zone","Dragostea Din Tei",2004],
+ ["Amy Winehouse","Rehab",2006],
+ ["Justin Timberlake","SexyBack",2006],
+ ["Rihanna","Umbrella",2007],
+ ["Coldplay","Viva la Vida",2008],
+ ["Katy Perry","I Kissed a Girl",2008],
+ ["Lady Gaga","Poker Face",2008],
+ ["Kings of Leon","Sex on Fire",2008],
+ // 2010s
+ ["Adele","Rolling in the Deep",2010],
+ ["Shakira","Waka Waka (This Time for Africa)",2010],
+ ["LMFAO","Party Rock Anthem",2011],
+ ["Gotye","Somebody That I Used to Know",2011],
+ ["PSY","Gangnam Style",2012],
+ ["Macklemore & Ryan Lewis","Thrift Shop",2012],
+ ["Imagine Dragons","Radioactive",2012],
+ ["Avicii","Wake Me Up",2013],
+ ["Daft Punk","Get Lucky",2013],
+ ["Pharrell Williams","Happy",2013],
+ ["Sia","Chandelier",2014],
+ ["Mark Ronson","Uptown Funk",2014],
+ ["Major Lazer","Lean On",2015],
+ ["Drake","One Dance",2016],
+ ["Ed Sheeran","Shape of You",2017],
+ ["Luis Fonsi","Despacito",2017],
+ ["Camila Cabello","Havana",2017],
+ ["Billie Eilish","Bad Guy",2019],
+ ["Lil Nas X","Old Town Road",2019],
+ ["Tones and I","Dance Monkey",2019],
+ ["The Weeknd","Blinding Lights",2019],
+ ["Dua Lipa","Don't Start Now",2019],
+ // 2020s
+ ["Glass Animals","Heat Waves",2020],
+ ["Dua Lipa","Levitating",2020],
+ ["Olivia Rodrigo","Drivers License",2021],
+ ["The Kid LAROI & Justin Bieber","Stay",2021],
+ ["Harry Styles","As It Was",2022],
+ ["Taylor Swift","Anti-Hero",2022],
+ ["Miley Cyrus","Flowers",2023],
+ ["Beyoncé","Texas Hold 'Em",2024],
+ ["Sabrina Carpenter","Espresso",2024],
+ ["Benson Boone","Beautiful Things",2024],
+ ["Lady Gaga & Bruno Mars","Die with a Smile",2024],
+ ["Rosé & Bruno Mars","APT.",2024],
+];
+
+/* ============ STAN GRY ============ */
+const S = {
+  screen: "setup",
+  nPlayers: 6,
+  target: 10,
+  tokensOn: true,
+  players: [],
+  deck: [], discard: [],
+  cur: 0,
+  song: null,
+  preview: undefined,   // undefined = szukam, null = brak, string = url
+  claims: false,
+  slot: null,
+  lastCorrect: null,
+};
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function draw(){
+  if(!S.deck.length){ S.deck = shuffle(S.discard.splice(0)); }
+  return S.deck.pop();
+}
+function spotify(song){
+  const q = encodeURIComponent(song[0] + " " + song[1]);
+  window.open("https://open.spotify.com/search/" + q, "_blank");
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+/* ============ WYSZUKIWANIE FRAGMENTÓW AUDIO (Deezer → iTunes) ============ */
+const previewCache = new Map();
+
+function jsonp(url, timeout=7000){
+  return new Promise((resolve, reject)=>{
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const timer = setTimeout(()=>{ cleanup(); reject(new Error("timeout")); }, timeout);
+    function cleanup(){ try{ delete window[cb]; }catch(e){} s.remove(); clearTimeout(timer); }
+    window[cb] = data => { cleanup(); resolve(data); };
+    s.onerror = () => { cleanup(); reject(new Error("load error")); };
+    s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+    document.head.appendChild(s);
+  });
+}
+
+async function findPreview(song){
+  const key = song[0] + "|" + song[1];
+  if(previewCache.has(key)) return previewCache.get(key);
+  let url = null;
+  // 1) Deezer — zapytanie precyzyjne
+  try{
+    const q = 'artist:"' + song[0] + '" track:"' + song[1] + '"';
+    const d = await jsonp("https://api.deezer.com/search?output=jsonp&limit=3&q=" + encodeURIComponent(q));
+    if(d && d.data && d.data.length && d.data[0].preview) url = d.data[0].preview;
+  }catch(e){}
+  // 2) Deezer — zapytanie luźne
+  if(!url){
+    try{
+      const d = await jsonp("https://api.deezer.com/search?output=jsonp&limit=3&q=" + encodeURIComponent(song[0] + " " + song[1]));
+      if(d && d.data && d.data.length && d.data[0].preview) url = d.data[0].preview;
+    }catch(e){}
+  }
+  // 3) iTunes — zapasowo
+  if(!url){
+    try{
+      const d = await jsonp("https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + encodeURIComponent(song[0] + " " + song[1]));
+      if(d && d.results && d.results.length && d.results[0].previewUrl) url = d.results[0].previewUrl;
+    }catch(e){}
+  }
+  // 4) iTunes przez fetch (gdyby JSONP był zablokowany, a CORS działał)
+  if(!url){
+    try{
+      const r = await fetch("https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + encodeURIComponent(song[0] + " " + song[1]));
+      const d = await r.json();
+      if(d && d.results && d.results.length && d.results[0].previewUrl) url = d.results[0].previewUrl;
+    }catch(e){}
+  }
+  previewCache.set(key, url);
+  return url;
+}
+
+/* ============ TEST DŹWIĘKU ============ */
+async function runSoundTest(){
+  const st = document.getElementById("testStatus");
+  st.textContent = "🔎 Łączę z bazą fragmentów…";
+  const url = await findPreview(["ABBA","Dancing Queen",1976]);
+  if(!url){
+    st.innerHTML = "❌ Brak dostępu do bazy fragmentów.<br><b>Otwórz ten plik w Chrome lub Safari</b> (nie w podglądzie w aplikacji Claude) i spróbuj ponownie.";
+    return;
+  }
+  st.textContent = "▶ Odtwarzam 4-sekundową próbkę… (sprawdź głośność!)";
+  try{
+    player.src = url;
+    await player.play();
+  }catch(e){
+    st.textContent = "❌ Przeglądarka zablokowała odtwarzanie. Tapnij przycisk jeszcze raz.";
+    return;
+  }
+  setTimeout(()=>{
+    player.pause();
+    st.innerHTML = "✅ Połączenie działa! Było słychać muzykę?<br>Jeśli nie — zwiększ głośność mediów i wyłącz tryb cichy.";
+  }, 4000);
+}
+
+let previewReq = 0; // chroni przed wyścigiem przy skip/next
+function prefetchPreview(){
+  S.preview = undefined;
+  const req = ++previewReq;
+  const song = S.song;
+  findPreview(song).then(url=>{
+    if(req !== previewReq) return;
+    S.preview = url;
+    if(S.screen === "listen") render();
+  });
+}
+
+/* ============ ODTWARZACZ ============ */
+const player = new Audio();
+player.preload = "auto";
+let isPlaying = false;
+
+player.addEventListener("ended", ()=>{ isPlaying = false; syncPlayerUI(); });
+player.addEventListener("pause", ()=>{ isPlaying = false; syncPlayerUI(); });
+player.addEventListener("play",  ()=>{ isPlaying = true;  syncPlayerUI(); });
+player.addEventListener("timeupdate", ()=>{
+  const bar = document.getElementById("pbar");
+  if(bar && player.duration) bar.style.width = (player.currentTime / player.duration * 100) + "%";
+});
+
+function playPreview(){
+  if(!S.preview) return;
+  if(player.src !== S.preview){ player.src = S.preview; }
+  player.play().catch(()=>{});
+}
+function stopPreview(){ try{ player.pause(); player.currentTime = 0; }catch(e){} }
+function syncPlayerUI(){
+  const v = document.getElementById("vinyl");
+  const b = document.getElementById("playBtn");
+  if(v) v.classList.toggle("playing", isPlaying);
+  if(b) b.textContent = isPlaying ? "⏸ Pauza" : "▶ Graj";
+}
+
+/* ============ WAKE LOCK ============ */
+let wakeLock = null;
+async function keepAwake(){
+  try{
+    if("wakeLock" in navigator){
+      wakeLock = await navigator.wakeLock.request("screen");
+      setWake(true);
+      wakeLock.addEventListener("release", ()=>setWake(false));
+    } else setWake(false, "brak API");
+  }catch(e){ setWake(false); }
+}
+function setWake(on, txt){
+  const el = document.getElementById("wake");
+  el.classList.toggle("on", !!on);
+  document.getElementById("wakeTxt").textContent = on ? "nie zgaśnie" : (txt || "ekran zgaśnie");
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && S.screen!=="setup") keepAwake(); });
+
+/* ============ RENDER ============ */
+const $ = sel => document.querySelector(sel);
+function render(){
+  const el = document.getElementById("screen");
+  el.innerHTML = ({setup, turn, listen, djfb, place, reveal, win})[S.screen]();
+  bind();
+  syncPlayerUI();
+  window.scrollTo(0,0);
+}
+
+/* ---- ekran: konfiguracja ---- */
+function setup(){
+  let names = "";
+  for(let i=0;i<S.nPlayers;i++){
+    const v = S.players[i] ? esc(S.players[i].name) : "";
+    names += `<input type="text" id="name${i}" placeholder="Gracz ${i+1}" value="${v}" maxlength="14">`;
+  }
+  return `
+  <h1>Kto zna muzykę<br>najlepiej?</h1>
+  <p class="sub">Telefon leży na środku stołu i <b>sam gra fragmenty utworów</b>. Słuchacie i zgadujecie, z którego roku jest hit, układając swoją oś czasu. Pierwsza osoba z ${S.target} kartami wygrywa.</p>
+
+  <div class="card">
+    <h2>Gracze</h2>
+    <div class="stepper">
+      <button id="pMinus">−</button>
+      <div class="num" id="pNum">${S.nPlayers}</div>
+      <button id="pPlus">+</button>
+    </div>
+    ${names}
+  </div>
+
+  <div class="card">
+    <h2>Ustawienia</h2>
+    <div class="opt">
+      <div><div class="lbl">Karty do zwycięstwa</div><div class="hint">Krócej = 6–8, klasycznie = 10</div></div>
+      <div class="mini-stepper"><button id="tMinus">−</button><span id="tNum">${S.target}</span><button id="tPlus">+</button></div>
+    </div>
+    <div class="opt">
+      <div><div class="lbl">Żetony 🎤</div><div class="hint">Nazwij tytuł i wykonawcę = żeton. 1 żeton = pomiń utwór, 3 = karta gratis.</div></div>
+      <button class="toggle ${S.tokensOn?"on":""}" id="tokTgl"></button>
+    </div>
+  </div>
+
+  <details>
+    <summary>📖 Jak gramy? (30 sekund czytania)</summary>
+    <p>1. W swojej turze naciskasz <b>▶ Graj</b> — telefon odtwarza fragment utworu. Nikt nie widzi tytułu ani roku.</p>
+    <p>2. Zgadujesz, <b>gdzie na Twojej osi czasu</b> pasuje ten utwór — przed, między czy po Twoich kartach — i dotykasz to miejsce.</p>
+    <p>3. Odkrywacie rok. Dobrze → karta zostaje u Ciebie. Źle → odpada. Ten sam rok co sąsiednia karta liczy się jako poprawne miejsce.</p>
+    <p>4. Bonus: jeśli przed odkryciem powiesz na głos <b>tytuł i wykonawcę</b>, dostajesz żeton (nawet gdy źle położysz kartę, maks. 5).</p>
+    <p>5. Gdyby dla jakiegoś utworu nie znalazł się fragment, gra przełączy się awaryjnie w tryb DJ-a ze Spotify.</p>
+  </details>
+
+  <div class="card">
+    <h2>🔊 Test dźwięku</h2>
+    <p class="sub" style="margin-bottom:0;">Zrób to raz przed grą — sprawdzisz, czy fragmenty utworów działają na tym urządzeniu.</p>
+    <button class="btn ghost" id="soundTest">Przetestuj odtwarzanie</button>
+    <div class="listen-status" id="testStatus"></div>
+  </div>
+
+  <button class="btn hot" id="start">▶ Zaczynamy!</button>`;
+}
+
+/* ---- ekran: początek tury ---- */
+function turn(){
+  const p = S.players[S.cur];
+  return `
+  ${scorebar()}
+  <div class="card turnbanner">
+    <div class="meta">Teraz gra</div>
+    <div class="who">${esc(p.name)}</div>
+    <div class="meta">kart: ${p.timeline.length}/${S.target}</div>
+    ${S.tokensOn ? `<div class="tokens">${'<span class="token"></span>'.repeat(p.tokens)}</div>` : ""}
+  </div>
+  ${timelineView(p.timeline)}
+  <button class="btn hot" id="toListen">🎧 Słuchamy!</button>
+  ${S.tokensOn && p.tokens>=3 ? `<button class="btn ghost" id="freeCard">💰 Wymień 3 żetony na kartę bez słuchania</button>` : ""}`;
+}
+
+/* ---- ekran: słuchanie (nikt nie widzi tytułu!) ---- */
+function listen(){
+  const p = S.players[S.cur];
+  let controls;
+  if(S.preview === undefined){
+    controls = `<div class="listen-status">🔎 Szukam fragmentu utworu…</div>
+      <button class="btn ghost small" id="retryFind" style="display:none;"></button>`;
+  } else if(S.preview === null){
+    controls = `<div class="listen-status">Nie udało się pobrać fragmentu. Jeśli to się powtarza przy każdym utworze — gra działa w środowisku, które blokuje audio (otwórz plik w Chrome/Safari).</div>
+      <button class="btn" id="toDjFb">🎧 Tryb DJ-a (Spotify)</button>
+      ${S.tokensOn && p.tokens>=1 ? "" : `<button class="btn ghost small" id="freeSkip">⏭ Pomiń ten utwór (gratis)</button>`}`;
+    if(!(S.tokensOn && p.tokens>=1)){
+      // przycisk gratis już dodany powyżej
+    }
+  } else {
+    controls = `
+      <div class="progress"><div id="pbar"></div></div>
+      <div class="row">
+        <button class="btn hot" id="playBtn">▶ Graj</button>
+        <button class="btn ghost" id="rewBtn">↺ Od nowa</button>
+      </div>
+      <div class="listen-status">Fragment ~30 s · możesz grać ile chcesz</div>`;
+  }
+  return `
+  <h2 style="text-align:center; margin-top:8px;">Tura: ${esc(p.name)}</h2>
+  <div class="vinyl" id="vinyl"><div class="center">?</div></div>
+  <div class="card">
+    ${controls}
+    ${S.tokensOn && p.tokens>=1 ? `<button class="btn ghost small" id="skip">⏭ Pomiń utwór (−1 żeton)</button>` : ""}
+  </div>
+  <button class="btn" id="toPlace" ${S.preview===undefined?"disabled":""}>➡ Ułóż kartę na osi czasu</button>`;
+}
+
+/* ---- ekran: tryb DJ (awaryjny, ze Spotify) ---- */
+function djfb(){
+  const p = S.players[S.cur];
+  return `
+  <div class="warn">🙈 ${esc(p.name)} NIE PATRZY! Telefon bierze sąsiad (DJ).</div>
+  <div class="card">
+    <div class="secret">
+      <div class="artist">${esc(S.song[0])}</div>
+      <div class="title">„${esc(S.song[1])}"</div>
+    </div>
+    <button class="btn ok" id="spot">🎵 Otwórz w Spotify i puść utwór</button>
+    <p class="sub" style="margin:10px 0 0; text-align:center;">Puść fragment, wróć do gry, potem oddaj telefon.</p>
+  </div>
+  <button class="btn hot" id="toPlace2">✅ Utwór puszczony — oddaj telefon graczowi</button>`;
+}
+
+/* ---- ekran: układanie ---- */
+function place(){
+  const p = S.players[S.cur];
+  return `
+  <h2 style="margin-top:6px;">${esc(p.name)}, gdzie pasuje ten utwór?</h2>
+  <p class="sub">Dotknij miejsce na swojej osi czasu. Muzyka może grać dalej 🎵</p>
+  ${timelineView(p.timeline, true)}
+  ${S.tokensOn ? `
+  <div class="card" style="padding:12px 16px;">
+    <div class="opt" style="padding:4px 0; border:none;">
+      <div><div class="lbl">🎤 Znam ten utwór!</div><div class="hint">Powiedz na głos tytuł i wykonawcę — reszta potwierdzi (+1 żeton)</div></div>
+      <button class="toggle ${S.claims?"on":""}" id="claimTgl"></button>
+    </div>
+  </div>` : ""}
+  <button class="btn hot" id="confirm" ${S.slot===null?"disabled":""}>🔍 Sprawdzamy!</button>`;
+}
+
+/* ---- ekran: odkrycie ---- */
+function reveal(){
+  const p = S.players[S.cur];
+  const ok = S.lastCorrect;
+  return `
+  <div class="card reveal">
+    <div class="bigyear" style="color:${ok?"var(--ok)":"var(--bad)"}">${S.song[2]}</div>
+    <div class="song">„${esc(S.song[1])}"</div>
+    <div class="art">${esc(S.song[0])}</div>
+    <div class="verdict ${ok?"ok":"bad"}">${ok?"✔ Dobrze! Karta zostaje":"✘ Pudło! Karta odpada"}</div>
+  </div>
+  ${timelineView(p.timeline)}
+  ${S.claims ? `
+  <div class="card" style="padding:14px 16px;">
+    <div class="lbl" style="font-weight:800;">🎤 ${esc(p.name)} zgłaszał(a) tytuł i wykonawcę.</div>
+    <div class="hint" style="color:var(--muted); font-size:12px; margin-top:2px;">Zgadzało się?</div>
+    <div class="row">
+      <button class="btn ok small" id="claimYes">Tak, +1 żeton</button>
+      <button class="btn ghost small" id="claimNo">Nie</button>
+    </div>
+  </div>` : ""}
+  <button class="btn" id="next" ${S.claims?"disabled":""}>➡ Następna kolejka</button>`;
+}
+
+/* ---- ekran: wygrana ---- */
+function win(){
+  const p = S.players[S.cur];
+  return `
+  <div class="confetti">🏆🎉🎵</div>
+  <div class="winner">${esc(p.name)} wygrywa!</div>
+  <p class="sub" style="text-align:center;">${S.target} kart na osi czasu. Szacun!</p>
+  ${timelineView(p.timeline)}
+  ${scorebar()}
+  <button class="btn hot" id="again">🔁 Rewanż (ci sami gracze)</button>
+  <button class="btn ghost" id="reset">⚙ Nowa konfiguracja</button>`;
+}
+
+/* ---- komponenty ---- */
+function timelineView(tl, interactive=false){
+  let inner = "";
+  if(interactive){
+    inner += slotBtn(0);
+    tl.forEach((s,i)=>{ inner += tlCard(s); inner += slotBtn(i+1); });
+  } else {
+    tl.forEach(s=>{ inner += tlCard(s); });
+    if(!tl.length) inner = `<div class="sub" style="padding:10px;">pusta oś czasu</div>`;
+  }
+  return `
+  <div class="card" style="padding:8px 0;">
+    <div class="tl-label"><span>← starsze</span><span>oś czasu</span><span>nowsze →</span></div>
+    <div class="tl-wrap"><div class="tl">${inner}</div></div>
+  </div>`;
+}
+function tlCard(s){
+  return `<div class="tl-card">
+    <div class="y">${s[2]}</div>
+    <div class="a">${esc(s[0])}</div>
+    <div class="t">${esc(s[1])}</div>
+  </div>`;
+}
+function slotBtn(i){
+  return `<div class="slot"><button data-slot="${i}" class="${S.slot===i?"sel":""}">+</button></div>`;
+}
+function scorebar(){
+  return `<div class="scorebar">${S.players.map((p,i)=>
+    `<div class="chip ${i===S.cur?"now":""}">${esc(p.name)} <b>${p.timeline.length}</b>${S.tokensOn?` · 🎤${p.tokens}`:""}</div>`).join("")}</div>`;
+}
+
+/* ============ LOGIKA ============ */
+function startGame(){
+  S.players = [];
+  for(let i=0;i<S.nPlayers;i++){
+    const v = ($("#name"+i)?.value || "").trim();
+    S.players.push({name: v || ("Gracz "+(i+1)), tokens: S.tokensOn?2:0, timeline:[]});
+  }
+  S.deck = shuffle(SONGS.map((s,i)=>i)).map(i=>SONGS[i]);
+  S.discard = [];
+  S.players.forEach(p => p.timeline.push(draw()));
+  S.cur = 0;
+  newTurn();
+  keepAwake();
+}
+function newTurn(){
+  stopPreview();
+  S.song = draw();
+  S.claims = false;
+  S.slot = null;
+  S.screen = "turn";
+  prefetchPreview();
+  render();
+}
+function checkPlacement(tl, slot, year){
+  const left = slot>0 ? tl[slot-1][2] : -Infinity;
+  const right = slot<tl.length ? tl[slot][2] : Infinity;
+  return year>=left && year<=right;
+}
+function confirmPlacement(){
+  stopPreview();
+  const p = S.players[S.cur];
+  const ok = checkPlacement(p.timeline, S.slot, S.song[2]);
+  S.lastCorrect = ok;
+  if(ok){ p.timeline.splice(S.slot, 0, S.song); }
+  else { S.discard.push(S.song); }
+  S.screen = "reveal";
+  render();
+}
+function nextTurn(){
+  const p = S.players[S.cur];
+  if(p.timeline.length >= S.target){ S.screen = "win"; render(); return; }
+  S.cur = (S.cur+1) % S.players.length;
+  newTurn();
+}
+function skipSong(cost){
+  const p = S.players[S.cur];
+  if(cost > 0){
+    if(p.tokens < cost) return;
+    p.tokens -= cost;
+  }
+  stopPreview();
+  S.discard.push(S.song);
+  S.song = draw();
+  prefetchPreview();
+  render();
+}
+
+/* ============ ZDARZENIA ============ */
+function bind(){
+  const on = (id, fn) => { const e = document.getElementById(id); if(e) e.onclick = fn; };
+
+  if(S.screen==="setup"){
+    on("pMinus", ()=>{ S.nPlayers=Math.max(2,S.nPlayers-1); render(); });
+    on("pPlus",  ()=>{ S.nPlayers=Math.min(10,S.nPlayers+1); render(); });
+    on("tMinus", ()=>{ S.target=Math.max(4,S.target-1); $("#tNum").textContent=S.target; });
+    on("tPlus",  ()=>{ S.target=Math.min(15,S.target+1); $("#tNum").textContent=S.target; });
+    on("tokTgl", ()=>{ S.tokensOn=!S.tokensOn; $("#tokTgl").classList.toggle("on",S.tokensOn); });
+    on("soundTest", runSoundTest);
+    on("start", startGame);
+  }
+  if(S.screen==="turn"){
+    on("toListen", ()=>{
+      S.screen="listen"; render();
+      // auto-start, jeśli fragment już gotowy (tap = gest użytkownika)
+      if(typeof S.preview === "string") playPreview();
+    });
+    on("freeCard", ()=>{
+      const p = S.players[S.cur];
+      if(p.tokens<3) return;
+      p.tokens -= 3;
+      const idx = p.timeline.findIndex(c => c[2] > S.song[2]);
+      if(idx===-1) p.timeline.push(S.song); else p.timeline.splice(idx,0,S.song);
+      if(p.timeline.length >= S.target){ S.screen="win"; render(); return; }
+      S.cur = (S.cur+1)%S.players.length;
+      newTurn();
+    });
+  }
+  if(S.screen==="listen"){
+    on("playBtn", ()=>{ if(isPlaying) player.pause(); else playPreview(); });
+    on("rewBtn", ()=>{ player.currentTime = 0; playPreview(); });
+    on("skip", ()=>skipSong(1));
+    on("freeSkip", ()=>skipSong(0));
+    on("toDjFb", ()=>{ S.screen="djfb"; render(); });
+    on("toPlace", ()=>{
+      if(S.preview===undefined) return;
+      if(S.preview===null){ S.screen="djfb"; render(); return; }
+      S.screen="place"; render();
+    });
+  }
+  if(S.screen==="djfb"){
+    on("spot", ()=>spotify(S.song));
+    on("toPlace2", ()=>{ S.screen="place"; render(); });
+  }
+  if(S.screen==="place"){
+    document.querySelectorAll("[data-slot]").forEach(b=>{
+      b.onclick = ()=>{ S.slot = parseInt(b.dataset.slot); render(); };
+    });
+    on("claimTgl", ()=>{ S.claims=!S.claims; $("#claimTgl").classList.toggle("on",S.claims); });
+    on("confirm", confirmPlacement);
+  }
+  if(S.screen==="reveal"){
+    on("claimYes", ()=>{
+      const p=S.players[S.cur];
+      p.tokens = Math.min(5, p.tokens+1);
+      S.claims=false; render();
+    });
+    on("claimNo", ()=>{ S.claims=false; render(); });
+    on("next", nextTurn);
+  }
+  if(S.screen==="win"){
+    on("again", ()=>{
+      S.players.forEach(p=>{ p.timeline=[]; p.tokens=S.tokensOn?2:0; });
+      S.deck = shuffle(SONGS.map((s,i)=>i)).map(i=>SONGS[i]);
+      S.discard=[];
+      S.players.forEach(p=>p.timeline.push(draw()));
+      S.cur=0; newTurn();
+    });
+    on("reset", ()=>{ S.screen="setup"; render(); });
+  }
+}
+
+render();
+</script>
+</body>
+</html>
