@@ -636,19 +636,27 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 
 /* ============ RENDER ============ */
 const $ = sel => document.querySelector(sel);
+let lastScreen = null;
 function render(){
   const el = document.getElementById("screen");
+  const sameScreen = (S.screen === lastScreen);
+  const y = window.scrollY;
   el.innerHTML = ({setup, turn, listen, djfb, place, reveal, win})[S.screen]();
   bind();
   syncPlayerUI();
-  window.scrollTo(0,0);
+  if(sameScreen){ window.scrollTo(0, y); }   // zostań tam, gdzie był użytkownik
+  else { window.scrollTo(0, 0); }            // nowy ekran = od góry
+  lastScreen = S.screen;
 }
+
+/* Szkice imion — trzymane poza ekranem, żeby zmiana zestawu/liczby graczy ich nie kasowała */
+let nameDrafts = [];
 
 /* ---- ekran: konfiguracja ---- */
 function setup(){
   let names = "";
   for(let i=0;i<S.nPlayers;i++){
-    const v = S.players[i] ? esc(S.players[i].name) : "";
+    const v = esc(nameDrafts[i] ?? (S.players[i] ? S.players[i].name : ""));
     names += `<input type="text" id="name${i}" placeholder="Gracz ${i+1}" value="${v}" maxlength="14">`;
   }
   return `
@@ -867,7 +875,7 @@ function scorebar(){
 function startGame(){
   S.players = [];
   for(let i=0;i<S.nPlayers;i++){
-    const v = ($("#name"+i)?.value || "").trim();
+    const v = (nameDrafts[i] ?? ($("#name"+i)?.value || "")).trim();
     S.players.push({name: v || ("Gracz "+(i+1)), tokens: S.tokensOn?2:0, timeline:[]});
   }
   S.deck = shuffle([...SETS[S.set].songs]);
@@ -927,6 +935,11 @@ function bind(){
   const on = (id, fn) => { const e = document.getElementById(id); if(e) e.onclick = fn; };
 
   if(S.screen==="setup"){
+    // zapisuj imiona na bieżąco, przy każdej literze
+    for(let i=0;i<S.nPlayers;i++){
+      const inp = document.getElementById("name"+i);
+      if(inp) inp.oninput = ()=>{ nameDrafts[i] = inp.value; };
+    }
     on("pMinus", ()=>{ S.nPlayers=Math.max(2,S.nPlayers-1); render(); });
     on("pPlus",  ()=>{ S.nPlayers=Math.min(10,S.nPlayers+1); render(); });
     on("tMinus", ()=>{ S.target=Math.max(4,S.target-1); $("#tNum").textContent=S.target; });
