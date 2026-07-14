@@ -63,7 +63,7 @@
   .mini-stepper button{width:34px; height:34px; border-radius:10px; border:none; background:var(--panel2);
     color:var(--ink); font-size:18px; font-weight:900; cursor:pointer;}
   .mini-stepper span{font-weight:900; font-size:18px; min-width:26px; text-align:center;}
-  .setpick{display:flex; gap:10px;}
+  .setpick{display:flex; flex-direction:column; gap:10px;}
   .setbtn{flex:1; background:var(--panel2); border:2px solid #322a5e; border-radius:14px;
     padding:14px 12px; color:var(--ink); text-align:left; cursor:pointer;}
   .setbtn.sel{border-color:var(--hot); background:rgba(255,61,138,.12);}
@@ -390,10 +390,55 @@ const SET_FILMOWE = [
  ["Dua Lipa","Dance the Night",2023,"Barbie"],
 ];
 
+/* ============ ZESTAW 3: BAJKI DLA DZIECI (wykonawca, tytuł utworu, ROK BAJKI, tytuł bajki) ============ */
+const SET_BAJKI = [
+ ["Siedmiu Krasnoludków","Heigh-Ho",1937,"Królewna Śnieżka i siedmiu krasnoludków"],
+ ["Cliff Edwards","When You Wish Upon a Star",1940,"Pinokio"],
+ ["Verna Felton","Bibbidi-Bobbidi-Boo",1950,"Kopciuszek"],
+ ["Bill Lee","Cruella De Vil",1961,"101 dalmatyńczyków"],
+ ["Phil Harris","The Bare Necessities",1967,"Księga dżungli"],
+ ["Larry Marks","Scooby-Doo, Where Are You?",1969,"Scooby-Doo"],
+ ["Phil Harris","Ev'rybody Wants to Be a Cat",1970,"Aryskotraci"],
+ ["Sherman Brothers","Winnie the Pooh",1977,"Kubuś Puchatek"],
+ ["Zbigniew Wodecki","Pszczółka Maja",1979,"Pszczółka Maja"],
+ ["Disney","Gummi Bears Theme",1985,"Gumisie"],
+ ["Samuel E. Wright","Under the Sea",1989,"Mała Syrenka"],
+ ["Peabo Bryson & Regina Belle","A Whole New World",1992,"Aladyn"],
+ ["Nathan Lane & Ernie Sabella","Hakuna Matata",1994,"Król Lew"],
+ ["Vanessa Williams","Colors of the Wind",1995,"Pocahontas"],
+ ["Randy Newman","You've Got a Friend in Me",1995,"Toy Story"],
+ ["Jason Paige","Pokémon Theme",1997,"Pokémon"],
+ ["Donny Osmond","I'll Make a Man Out of You",1998,"Mulan"],
+ ["Phil Collins","You'll Be in My Heart",1999,"Tarzan"],
+ ["Painty the Pirate","SpongeBob SquarePants Theme",1999,"SpongeBob Kanciastoporty"],
+ ["Smash Mouth","I'm a Believer",2001,"Shrek"],
+ ["Reel 2 Real","I Like to Move It",2005,"Madagaskar"],
+ ["Rascal Flatts","Life is a Highway",2006,"Auta"],
+ ["Mandy Moore & Zachary Levi","I See the Light",2010,"Zaplątani"],
+ ["PAW Patrol","PAW Patrol Theme",2013,"Psi Patrol"],
+ ["Katarzyna Łaska","Mam tę moc",2013,"Kraina lodu"],
+ ["Pharrell Williams","Happy",2013,"Minionki rozrabiają"],
+ ["Lou & Lenni-Kim","Miraculous Theme",2015,"Miraculum: Biedronka i Czarny Kot"],
+ ["Pinkfong","Baby Shark",2016,"Baby Shark"],
+ ["Shakira","Try Everything",2016,"Zwierzogród"],
+ ["Justin Timberlake","Can't Stop the Feeling!",2016,"Trolle"],
+ ["Auli'i Cravalho","How Far I'll Go",2016,"Vaiana: Skarb oceanu"],
+ ["Miguel","Remember Me",2017,"Coco"],
+ ["Katarzyna Łaska","W nieznane",2019,"Kraina lodu II"],
+ ["Obsada Encanto","Nie mówimy o Brunie",2021,"Nasze magiczne Encanto"],
+];
+
 /* ============ REJESTR ZESTAWÓW ============ */
 const SETS = {
-  klasyki: { icon:"🎵", name:"Hity wszech czasów", desc:"Zgadujesz rok wydania utworu. Żeton za tytuł i wykonawcę.", mode:"song", songs:SET_KLASYKI },
-  filmy:   { icon:"🎬", name:"Hity filmowe", desc:"Zgadujesz rok premiery FILMU. Żeton za tytuł filmu.", mode:"film", songs:SET_FILMOWE },
+  klasyki: { icon:"🎵", name:"Hity wszech czasów", desc:"Zgadujesz rok wydania utworu. Żeton za tytuł i wykonawcę.",
+             mode:"song", songs:SET_KLASYKI, tIcon:"🎤",
+             claimLbl:"🎤 Znam ten utwór!", claimHint:"Powiedz na głos tytuł i wykonawcę — reszta potwierdzi (+1 żeton)", claimTag:"tytuł i wykonawcę" },
+  filmy:   { icon:"🎬", name:"Hity filmowe", desc:"Zgadujesz rok premiery FILMU. Żeton za tytuł filmu.",
+             mode:"film", songs:SET_FILMOWE, tIcon:"🎬",
+             claimLbl:"🎬 Znam ten film!", claimHint:"Powiedz na głos tytuł filmu — reszta potwierdzi (+1 żeton)", claimTag:"tytuł filmu" },
+  bajki:   { icon:"🧸", name:"Bajki dla dzieci", desc:"Zgadujesz rok premiery BAJKI. Żeton za tytuł bajki.",
+             mode:"film", songs:SET_BAJKI, tIcon:"🧸",
+             claimLbl:"🧸 Znam tę bajkę!", claimHint:"Powiedz na głos tytuł bajki — reszta potwierdzi (+1 żeton)", claimTag:"tytuł bajki" },
 };
 const isFilm = () => SETS[S.set].mode === "film";
 
@@ -649,7 +694,7 @@ function setup(){
     <p>2. Zgadujesz, <b>gdzie na Twojej osi czasu</b> pasuje ten utwór — przed, między czy po Twoich kartach — i dotykasz to miejsce.</p>
     <p>3. Odkrywacie rok. Dobrze → karta zostaje u Ciebie. Źle → odpada. Ten sam rok co sąsiednia karta liczy się jako poprawne miejsce.</p>
     <p>4. Bonus: jeśli przed odkryciem powiesz na głos <b>tytuł i wykonawcę</b> (w zestawie filmowym: <b>tytuł filmu</b>), dostajesz żeton (nawet gdy źle położysz kartę, maks. 5).</p>
-    <p>5. W zestawie 🎬 Hity filmowe zgadujesz <b>rok premiery filmu</b>, z którego pochodzi utwór — uwaga, piosenka bywa starsza niż film!</p>
+    <p>5. W zestawie 🎬 Hity filmowe zgadujesz <b>rok premiery filmu</b>, a w zestawie 🧸 Bajki — <b>rok premiery bajki</b>. Uwaga, piosenka bywa starsza niż film!</p>
     <p>6. Gdyby dla jakiegoś utworu nie znalazł się fragment, gra przełączy się awaryjnie w tryb DJ-a ze Spotify.</p>
   </details>
 
@@ -721,7 +766,7 @@ function djfb(){
     <div class="secret">
       <div class="artist">${esc(S.song[0])}</div>
       <div class="title">„${esc(S.song[1])}"</div>
-      ${isFilm() ? `<div class="title">🎬 ${esc(S.song[3])}</div>` : ""}
+      ${isFilm() ? `<div class="title">${SETS[S.set].tIcon} ${esc(S.song[3])}</div>` : ""}
     </div>
     <button class="btn ok" id="spot">🎵 Otwórz w Spotify i puść utwór</button>
     <p class="sub" style="margin:10px 0 0; text-align:center;">Puść fragment, wróć do gry, potem oddaj telefon.</p>
@@ -739,7 +784,7 @@ function place(){
   ${S.tokensOn ? `
   <div class="card" style="padding:12px 16px;">
     <div class="opt" style="padding:4px 0; border:none;">
-      <div><div class="lbl">${isFilm() ? "🎬 Znam ten film!" : "🎤 Znam ten utwór!"}</div><div class="hint">${isFilm() ? "Powiedz na głos tytuł filmu — reszta potwierdzi (+1 żeton)" : "Powiedz na głos tytuł i wykonawcę — reszta potwierdzi (+1 żeton)"}</div></div>
+      <div><div class="lbl">${SETS[S.set].claimLbl}</div><div class="hint">${SETS[S.set].claimHint}</div></div>
       <button class="toggle ${S.claims?"on":""}" id="claimTgl"></button>
     </div>
   </div>` : ""}
@@ -754,7 +799,7 @@ function reveal(){
   <div class="card reveal">
     <div class="bigyear" style="color:${ok?"var(--ok)":"var(--bad)"}">${S.song[2]}</div>
     ${isFilm()
-      ? `<div class="song">🎬 „${esc(S.song[3])}"</div>
+      ? `<div class="song">${SETS[S.set].tIcon} „${esc(S.song[3])}"</div>
          <div class="art">${esc(S.song[0])} — „${esc(S.song[1])}"</div>`
       : `<div class="song">„${esc(S.song[1])}"</div>
          <div class="art">${esc(S.song[0])}</div>`}
@@ -763,7 +808,7 @@ function reveal(){
   ${timelineView(p.timeline)}
   ${S.claims ? `
   <div class="card" style="padding:14px 16px;">
-    <div class="lbl" style="font-weight:800;">${isFilm() ? "🎬" : "🎤"} ${esc(p.name)} zgłaszał(a) ${isFilm() ? "tytuł filmu" : "tytuł i wykonawcę"}.</div>
+    <div class="lbl" style="font-weight:800;">${SETS[S.set].tIcon} ${esc(p.name)} zgłaszał(a) ${SETS[S.set].claimTag}.</div>
     <div class="hint" style="color:var(--muted); font-size:12px; margin-top:2px;">Zgadzało się?</div>
     <div class="row">
       <button class="btn ok small" id="claimYes">Tak, +1 żeton</button>
@@ -806,7 +851,7 @@ function tlCard(s){
   const film = isFilm();
   return `<div class="tl-card">
     <div class="y">${s[2]}</div>
-    <div class="a">${esc(film ? "🎬 " + s[3] : s[0])}</div>
+    <div class="a">${film ? esc(SETS[S.set].tIcon + " " + s[3]) : esc(s[0])}</div>
     <div class="t">${esc(film ? s[0] : s[1])}</div>
   </div>`;
 }
