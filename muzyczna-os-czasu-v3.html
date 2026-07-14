@@ -63,6 +63,12 @@
   .mini-stepper button{width:34px; height:34px; border-radius:10px; border:none; background:var(--panel2);
     color:var(--ink); font-size:18px; font-weight:900; cursor:pointer;}
   .mini-stepper span{font-weight:900; font-size:18px; min-width:26px; text-align:center;}
+  .setpick{display:flex; gap:10px;}
+  .setbtn{flex:1; background:var(--panel2); border:2px solid #322a5e; border-radius:14px;
+    padding:14px 12px; color:var(--ink); text-align:left; cursor:pointer;}
+  .setbtn.sel{border-color:var(--hot); background:rgba(255,61,138,.12);}
+  .setbtn .n{font-weight:900; font-size:15px; line-height:1.25;}
+  .setbtn .d{font-size:11.5px; color:var(--muted); margin-top:5px; line-height:1.35;}
 
   /* turn banner */
   .turnbanner{text-align:center; padding:26px 16px;}
@@ -139,8 +145,8 @@
 </div>
 
 <script>
-/* ============ BAZA UTWORÓW (wykonawca, tytuł, rok) ============ */
-const SONGS = [
+/* ============ ZESTAW 1: HITY WSZECH CZASÓW (wykonawca, tytuł, rok utworu) ============ */
+const SET_KLASYKI = [
  // Polska — klasyki
  ["Czesław Niemen","Dziwny jest ten świat",1967],
  ["Czerwone Gitary","Anna Maria",1968],
@@ -308,9 +314,93 @@ const SONGS = [
  ["Rosé & Bruno Mars","APT.",2024],
 ];
 
+/* ============ ZESTAW 2: HITY FILMOWE (wykonawca, tytuł utworu, ROK FILMU, tytuł filmu) ============ */
+const SET_FILMOWE = [
+ ["Judy Garland","Over the Rainbow",1939,"Czarnoksiężnik z Oz"],
+ ["Gene Kelly","Singin' in the Rain",1952,"Deszczowa piosenka"],
+ ["Audrey Hepburn","Moon River",1961,"Śniadanie u Tiffany'ego"],
+ ["Shirley Bassey","Goldfinger",1964,"Goldfinger"],
+ ["Simon & Garfunkel","Mrs. Robinson",1967,"Absolwent"],
+ ["B.J. Thomas","Raindrops Keep Fallin' on My Head",1969,"Butch Cassidy i Sundance Kid"],
+ ["Liza Minnelli","Cabaret",1972,"Kabaret"],
+ ["Paul McCartney & Wings","Live and Let Die",1973,"Żyj i pozwól umrzeć"],
+ ["Bee Gees","Stayin' Alive",1977,"Gorączka sobotniej nocy"],
+ ["John Travolta & Olivia Newton-John","You're the One That I Want",1978,"Grease"],
+ ["Monty Python","Always Look on the Bright Side of Life",1979,"Żywot Briana"],
+ ["The Blues Brothers","Everybody Needs Somebody to Love",1980,"Blues Brothers"],
+ ["Blondie","Call Me",1980,"Amerykański żigolak"],
+ ["Dolly Parton","9 to 5",1980,"Od dziewiątej do piątej"],
+ ["Survivor","Eye of the Tiger",1982,"Rocky III"],
+ ["Irene Cara","Flashdance... What a Feeling",1983,"Flashdance"],
+ ["Ray Parker Jr.","Ghostbusters",1984,"Pogromcy duchów"],
+ ["Kenny Loggins","Footloose",1984,"Footloose"],
+ ["Prince","Purple Rain",1984,"Purple Rain"],
+ ["Limahl","The NeverEnding Story",1984,"Niekończąca się opowieść"],
+ ["Piotr Fronczewski","Witajcie w naszej bajce",1984,"Akademia Pana Kleksa"],
+ ["Simple Minds","Don't You (Forget About Me)",1985,"Klub winowajców"],
+ ["Huey Lewis & The News","The Power of Love",1985,"Powrót do przyszłości"],
+ ["Berlin","Take My Breath Away",1986,"Top Gun"],
+ ["Joe Cocker","You Can Leave Your Hat On",1986,"9 i pół tygodnia"],
+ ["Bill Medley & Jennifer Warnes","(I've Had) The Time of My Life",1987,"Dirty Dancing"],
+ ["Los Lobos","La Bamba",1987,"La Bamba"],
+ ["Samuel E. Wright","Under the Sea",1989,"Mała Syrenka"],
+ ["The Righteous Brothers","Unchained Melody",1990,"Uwierz w ducha"],
+ ["Roxette","It Must Have Been Love",1990,"Pretty Woman"],
+ ["Céline Dion & Peabo Bryson","Beauty and the Beast",1991,"Piękna i Bestia"],
+ ["Bryan Adams","(Everything I Do) I Do It for You",1991,"Robin Hood: Książę złodziei"],
+ ["Whitney Houston","I Will Always Love You",1992,"Bodyguard"],
+ ["Peabo Bryson & Regina Belle","A Whole New World",1992,"Aladyn"],
+ ["Stealers Wheel","Stuck in the Middle with You",1992,"Wściekłe psy"],
+ ["Bruce Springsteen","Streets of Philadelphia",1993,"Filadelfia"],
+ ["Elton John","Can You Feel the Love Tonight",1994,"Król Lew"],
+ ["Dusty Springfield","Son of a Preacher Man",1994,"Pulp Fiction"],
+ ["Coolio","Gangsta's Paradise",1995,"Niebezpieczne umysły"],
+ ["Seal","Kiss from a Rose",1995,"Batman Forever"],
+ ["Randy Newman","You've Got a Friend in Me",1995,"Toy Story"],
+ ["Iggy Pop","Lust for Life",1996,"Trainspotting"],
+ ["Céline Dion","My Heart Will Go On",1997,"Titanic"],
+ ["Will Smith","Men in Black",1997,"Faceci w czerni"],
+ ["Elektryczne Gitary","Killer",1997,"Kiler"],
+ ["Aerosmith","I Don't Want to Miss a Thing",1998,"Armageddon"],
+ ["Goo Goo Dolls","Iris",1998,"Miasto Aniołów"],
+ ["Whitney Houston & Mariah Carey","When You Believe",1998,"Książę Egiptu"],
+ ["Edyta Górniak & Mieczysław Szcześniak","Dumka na dwa serca",1999,"Ogniem i mieczem"],
+ ["T.Love","Chłopaki nie płaczą",2000,"Chłopaki nie płaczą"],
+ ["Smash Mouth","All Star",2001,"Shrek"],
+ ["Gary Jules","Mad World",2001,"Donnie Darko"],
+ ["Enya","May It Be",2001,"Władca Pierścieni: Drużyna Pierścienia"],
+ ["Eminem","Lose Yourself",2002,"8. Mila"],
+ ["Nancy Sinatra","Bang Bang (My Baby Shot Me Down)",2003,"Kill Bill"],
+ ["Counting Crows","Accidentally in Love",2004,"Shrek 2"],
+ ["A.R. Rahman","Jai Ho",2008,"Slumdog. Milioner z ulicy"],
+ ["Adele","Skyfall",2012,"Skyfall"],
+ ["Idina Menzel","Let It Go",2013,"Kraina lodu"],
+ ["Pharrell Williams","Happy",2013,"Minionki rozrabiają"],
+ ["Blue Swede","Hooked on a Feeling",2014,"Strażnicy Galaktyki"],
+ ["Wiz Khalifa ft. Charlie Puth","See You Again",2015,"Szybcy i wściekli 7"],
+ ["Sam Smith","Writing's on the Wall",2015,"Spectre"],
+ ["Auli'i Cravalho","How Far I'll Go",2016,"Vaiana: Skarb oceanu"],
+ ["Justin Timberlake","Can't Stop the Feeling!",2016,"Trolle"],
+ ["Ryan Gosling & Emma Stone","City of Stars",2016,"La La Land"],
+ ["Keala Settle","This Is Me",2017,"Król rozrywki"],
+ ["Lady Gaga & Bradley Cooper","Shallow",2018,"Narodziny gwiazdy"],
+ ["Post Malone & Swae Lee","Sunflower",2018,"Spider-Man Uniwersum"],
+ ["Billie Eilish","No Time to Die",2021,"Nie czas umierać"],
+ ["Encanto Cast","We Don't Talk About Bruno",2021,"Nasze magiczne Encanto"],
+ ["Dua Lipa","Dance the Night",2023,"Barbie"],
+];
+
+/* ============ REJESTR ZESTAWÓW ============ */
+const SETS = {
+  klasyki: { icon:"🎵", name:"Hity wszech czasów", desc:"Zgadujesz rok wydania utworu. Żeton za tytuł i wykonawcę.", mode:"song", songs:SET_KLASYKI },
+  filmy:   { icon:"🎬", name:"Hity filmowe", desc:"Zgadujesz rok premiery FILMU. Żeton za tytuł filmu.", mode:"film", songs:SET_FILMOWE },
+};
+const isFilm = () => SETS[S.set].mode === "film";
+
 /* ============ STAN GRY ============ */
 const S = {
   screen: "setup",
+  set: "klasyki",
   nPlayers: 6,
   target: 10,
   tokensOn: true,
@@ -351,54 +441,57 @@ function jsonp(url, timeout=7000){
   });
 }
 
-async function findPreview(song){
-  const key = song[0] + "|" + song[1];
-  if(previewCache.has(key)) return previewCache.get(key);
-  let url = null;
-  // 1) Deezer — zapytanie precyzyjne
+const CACHE_TTL = 10*60*1000; // linki CDN wygasają — nie ufaj im dłużej niż 10 min
+
+async function deezerSearch(q){
+  const d = await jsonp("https://api.deezer.com/search?output=jsonp&limit=3&q=" + encodeURIComponent(q));
+  return (d && d.data && d.data.length && d.data[0].preview) ? d.data[0].preview : null;
+}
+async function itunesSearch(term){
   try{
-    const q = 'artist:"' + song[0] + '" track:"' + song[1] + '"';
-    const d = await jsonp("https://api.deezer.com/search?output=jsonp&limit=3&q=" + encodeURIComponent(q));
-    if(d && d.data && d.data.length && d.data[0].preview) url = d.data[0].preview;
+    const d = await jsonp("https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + encodeURIComponent(term));
+    if(d && d.results && d.results.length && d.results[0].previewUrl) return d.results[0].previewUrl;
   }catch(e){}
-  // 2) Deezer — zapytanie luźne
-  if(!url){
-    try{
-      const d = await jsonp("https://api.deezer.com/search?output=jsonp&limit=3&q=" + encodeURIComponent(song[0] + " " + song[1]));
-      if(d && d.data && d.data.length && d.data[0].preview) url = d.data[0].preview;
-    }catch(e){}
-  }
-  // 3) iTunes — zapasowo
-  if(!url){
-    try{
-      const d = await jsonp("https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + encodeURIComponent(song[0] + " " + song[1]));
-      if(d && d.results && d.results.length && d.results[0].previewUrl) url = d.results[0].previewUrl;
-    }catch(e){}
-  }
-  // 4) iTunes przez fetch (gdyby JSONP był zablokowany, a CORS działał)
-  if(!url){
-    try{
-      const r = await fetch("https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + encodeURIComponent(song[0] + " " + song[1]));
-      const d = await r.json();
-      if(d && d.results && d.results.length && d.results[0].previewUrl) url = d.results[0].previewUrl;
-    }catch(e){}
-  }
-  previewCache.set(key, url);
-  return url;
+  try{
+    const r = await fetch("https://itunes.apple.com/search?media=music&entity=song&limit=3&term=" + encodeURIComponent(term));
+    const d = await r.json();
+    if(d && d.results && d.results.length && d.results[0].previewUrl) return d.results[0].previewUrl;
+  }catch(e){}
+  return null;
+}
+
+/* Zwraca LISTĘ kandydatów (Deezer + iTunes) — gdy jeden padnie, gra przełącza się na drugi */
+async function findPreviews(song, fresh=false){
+  const key = song[0] + "|" + song[1];
+  const hit = previewCache.get(key);
+  if(!fresh && hit && (Date.now() - hit.t) < CACHE_TTL && hit.urls.length) return hit.urls;
+
+  const term = song[0] + " " + song[1];
+  const [dz, it] = await Promise.all([
+    (async ()=>{
+      try{ const u = await deezerSearch('artist:"' + song[0] + '" track:"' + song[1] + '"'); if(u) return u; }catch(e){}
+      try{ return await deezerSearch(term); }catch(e){}
+      return null;
+    })(),
+    itunesSearch(term)
+  ]);
+  const urls = [dz, it].filter(Boolean);
+  previewCache.set(key, {urls, t: Date.now()});
+  return urls;
 }
 
 /* ============ TEST DŹWIĘKU ============ */
 async function runSoundTest(){
   const st = document.getElementById("testStatus");
   st.textContent = "🔎 Łączę z bazą fragmentów…";
-  const url = await findPreview(["ABBA","Dancing Queen",1976]);
-  if(!url){
+  const urls = await findPreviews(["ABBA","Dancing Queen",1976], true);
+  if(!urls.length){
     st.innerHTML = "❌ Brak dostępu do bazy fragmentów.<br><b>Otwórz ten plik w Chrome lub Safari</b> (nie w podglądzie w aplikacji Claude) i spróbuj ponownie.";
     return;
   }
   st.textContent = "▶ Odtwarzam 4-sekundową próbkę… (sprawdź głośność!)";
   try{
-    player.src = url;
+    player.src = urls[0];
     await player.play();
   }catch(e){
     st.textContent = "❌ Przeglądarka zablokowała odtwarzanie. Tapnij przycisk jeszcze raz.";
@@ -411,14 +504,17 @@ async function runSoundTest(){
 }
 
 let previewReq = 0; // chroni przed wyścigiem przy skip/next
-function prefetchPreview(){
+function prefetchPreview(fresh=false){
   S.preview = undefined;
+  S.candIdx = 0;
   const req = ++previewReq;
-  const song = S.song;
-  findPreview(song).then(url=>{
+  findPreviews(S.song, fresh).then(urls=>{
     if(req !== previewReq) return;
-    S.preview = url;
-    if(S.screen === "listen") render();
+    S.preview = urls.length ? urls : null;
+    if(S.screen === "listen"){
+      render();
+      if(fresh && S.preview) playPreview(); // wznów po odświeżeniu linku
+    }
   });
 }
 
@@ -426,20 +522,47 @@ function prefetchPreview(){
 const player = new Audio();
 player.preload = "auto";
 let isPlaying = false;
+let triedFresh = false;
 
 player.addEventListener("ended", ()=>{ isPlaying = false; syncPlayerUI(); });
 player.addEventListener("pause", ()=>{ isPlaying = false; syncPlayerUI(); });
-player.addEventListener("play",  ()=>{ isPlaying = true;  syncPlayerUI(); });
+player.addEventListener("play",  ()=>{ isPlaying = true;  syncPlayerUI(); setListenStatus("🎵 Gra… (fragment ~30 s)"); });
 player.addEventListener("timeupdate", ()=>{
   const bar = document.getElementById("pbar");
   if(bar && player.duration) bar.style.width = (player.currentTime / player.duration * 100) + "%";
 });
+player.addEventListener("error", ()=>handleAudioFail());
+player.addEventListener("stalled", ()=>{ setListenStatus("⏳ Wolne łącze — dźwięk się buforuje…"); });
+
+function setListenStatus(msg){
+  const el = document.getElementById("lStatus");
+  if(el) el.textContent = msg;
+}
 
 function playPreview(){
-  if(!S.preview) return;
-  if(player.src !== S.preview){ player.src = S.preview; }
-  player.play().catch(()=>{});
+  if(!Array.isArray(S.preview) || !S.preview.length) return;
+  const url = S.preview[S.candIdx];
+  if(player.src !== url){ player.src = url; }
+  const pr = player.play();
+  if(pr && pr.catch) pr.catch(()=>handleAudioFail());
 }
+
+/* Gdy audio nie chce grać: 1) zapasowe źródło → 2) świeży link → 3) jasny komunikat */
+function handleAudioFail(){
+  if(S.screen !== "listen" || !Array.isArray(S.preview)) return;
+  if(S.candIdx < S.preview.length - 1){
+    S.candIdx++;
+    setListenStatus("🔁 Zmieniam źródło dźwięku…");
+    playPreview();
+  } else if(!triedFresh){
+    triedFresh = true;
+    setListenStatus("🔄 Link wygasł — pobieram świeży…");
+    prefetchPreview(true);
+  } else {
+    setListenStatus("❌ Nie mogę odtworzyć tego utworu — tapnij ▶ Graj jeszcze raz albo pomiń utwór.");
+  }
+}
+
 function stopPreview(){ try{ player.pause(); player.currentTime = 0; }catch(e){} }
 function syncPlayerUI(){
   const v = document.getElementById("vinyl");
@@ -488,6 +611,17 @@ function setup(){
   <p class="sub">Telefon leży na środku stołu i <b>sam gra fragmenty utworów</b>. Słuchacie i zgadujecie, z którego roku jest hit, układając swoją oś czasu. Pierwsza osoba z ${S.target} kartami wygrywa.</p>
 
   <div class="card">
+    <h2>Zestaw muzyczny</h2>
+    <div class="setpick">
+      ${Object.entries(SETS).map(([k,v])=>`
+        <button class="setbtn ${S.set===k?"sel":""}" data-set="${k}">
+          <div class="n">${v.icon} ${v.name}</div>
+          <div class="d">${v.desc}</div>
+        </button>`).join("")}
+    </div>
+  </div>
+
+  <div class="card">
     <h2>Gracze</h2>
     <div class="stepper">
       <button id="pMinus">−</button>
@@ -504,7 +638,7 @@ function setup(){
       <div class="mini-stepper"><button id="tMinus">−</button><span id="tNum">${S.target}</span><button id="tPlus">+</button></div>
     </div>
     <div class="opt">
-      <div><div class="lbl">Żetony 🎤</div><div class="hint">Nazwij tytuł i wykonawcę = żeton. 1 żeton = pomiń utwór, 3 = karta gratis.</div></div>
+      <div><div class="lbl">Żetony 🎤</div><div class="hint">Traf tytuł (utworu lub filmu — zależnie od zestawu) = żeton. 1 żeton = pomiń utwór, 3 = karta gratis.</div></div>
       <button class="toggle ${S.tokensOn?"on":""}" id="tokTgl"></button>
     </div>
   </div>
@@ -514,8 +648,9 @@ function setup(){
     <p>1. W swojej turze naciskasz <b>▶ Graj</b> — telefon odtwarza fragment utworu. Nikt nie widzi tytułu ani roku.</p>
     <p>2. Zgadujesz, <b>gdzie na Twojej osi czasu</b> pasuje ten utwór — przed, między czy po Twoich kartach — i dotykasz to miejsce.</p>
     <p>3. Odkrywacie rok. Dobrze → karta zostaje u Ciebie. Źle → odpada. Ten sam rok co sąsiednia karta liczy się jako poprawne miejsce.</p>
-    <p>4. Bonus: jeśli przed odkryciem powiesz na głos <b>tytuł i wykonawcę</b>, dostajesz żeton (nawet gdy źle położysz kartę, maks. 5).</p>
-    <p>5. Gdyby dla jakiegoś utworu nie znalazł się fragment, gra przełączy się awaryjnie w tryb DJ-a ze Spotify.</p>
+    <p>4. Bonus: jeśli przed odkryciem powiesz na głos <b>tytuł i wykonawcę</b> (w zestawie filmowym: <b>tytuł filmu</b>), dostajesz żeton (nawet gdy źle położysz kartę, maks. 5).</p>
+    <p>5. W zestawie 🎬 Hity filmowe zgadujesz <b>rok premiery filmu</b>, z którego pochodzi utwór — uwaga, piosenka bywa starsza niż film!</p>
+    <p>6. Gdyby dla jakiegoś utworu nie znalazł się fragment, gra przełączy się awaryjnie w tryb DJ-a ze Spotify.</p>
   </details>
 
   <div class="card">
@@ -565,7 +700,7 @@ function listen(){
         <button class="btn hot" id="playBtn">▶ Graj</button>
         <button class="btn ghost" id="rewBtn">↺ Od nowa</button>
       </div>
-      <div class="listen-status">Fragment ~30 s · możesz grać ile chcesz</div>`;
+      <div class="listen-status" id="lStatus">Fragment ~30 s · możesz grać ile chcesz</div>`;
   }
   return `
   <h2 style="text-align:center; margin-top:8px;">Tura: ${esc(p.name)}</h2>
@@ -586,6 +721,7 @@ function djfb(){
     <div class="secret">
       <div class="artist">${esc(S.song[0])}</div>
       <div class="title">„${esc(S.song[1])}"</div>
+      ${isFilm() ? `<div class="title">🎬 ${esc(S.song[3])}</div>` : ""}
     </div>
     <button class="btn ok" id="spot">🎵 Otwórz w Spotify i puść utwór</button>
     <p class="sub" style="margin:10px 0 0; text-align:center;">Puść fragment, wróć do gry, potem oddaj telefon.</p>
@@ -603,7 +739,7 @@ function place(){
   ${S.tokensOn ? `
   <div class="card" style="padding:12px 16px;">
     <div class="opt" style="padding:4px 0; border:none;">
-      <div><div class="lbl">🎤 Znam ten utwór!</div><div class="hint">Powiedz na głos tytuł i wykonawcę — reszta potwierdzi (+1 żeton)</div></div>
+      <div><div class="lbl">${isFilm() ? "🎬 Znam ten film!" : "🎤 Znam ten utwór!"}</div><div class="hint">${isFilm() ? "Powiedz na głos tytuł filmu — reszta potwierdzi (+1 żeton)" : "Powiedz na głos tytuł i wykonawcę — reszta potwierdzi (+1 żeton)"}</div></div>
       <button class="toggle ${S.claims?"on":""}" id="claimTgl"></button>
     </div>
   </div>` : ""}
@@ -617,14 +753,17 @@ function reveal(){
   return `
   <div class="card reveal">
     <div class="bigyear" style="color:${ok?"var(--ok)":"var(--bad)"}">${S.song[2]}</div>
-    <div class="song">„${esc(S.song[1])}"</div>
-    <div class="art">${esc(S.song[0])}</div>
+    ${isFilm()
+      ? `<div class="song">🎬 „${esc(S.song[3])}"</div>
+         <div class="art">${esc(S.song[0])} — „${esc(S.song[1])}"</div>`
+      : `<div class="song">„${esc(S.song[1])}"</div>
+         <div class="art">${esc(S.song[0])}</div>`}
     <div class="verdict ${ok?"ok":"bad"}">${ok?"✔ Dobrze! Karta zostaje":"✘ Pudło! Karta odpada"}</div>
   </div>
   ${timelineView(p.timeline)}
   ${S.claims ? `
   <div class="card" style="padding:14px 16px;">
-    <div class="lbl" style="font-weight:800;">🎤 ${esc(p.name)} zgłaszał(a) tytuł i wykonawcę.</div>
+    <div class="lbl" style="font-weight:800;">${isFilm() ? "🎬" : "🎤"} ${esc(p.name)} zgłaszał(a) ${isFilm() ? "tytuł filmu" : "tytuł i wykonawcę"}.</div>
     <div class="hint" style="color:var(--muted); font-size:12px; margin-top:2px;">Zgadzało się?</div>
     <div class="row">
       <button class="btn ok small" id="claimYes">Tak, +1 żeton</button>
@@ -664,10 +803,11 @@ function timelineView(tl, interactive=false){
   </div>`;
 }
 function tlCard(s){
+  const film = isFilm();
   return `<div class="tl-card">
     <div class="y">${s[2]}</div>
-    <div class="a">${esc(s[0])}</div>
-    <div class="t">${esc(s[1])}</div>
+    <div class="a">${esc(film ? "🎬 " + s[3] : s[0])}</div>
+    <div class="t">${esc(film ? s[0] : s[1])}</div>
   </div>`;
 }
 function slotBtn(i){
@@ -685,7 +825,7 @@ function startGame(){
     const v = ($("#name"+i)?.value || "").trim();
     S.players.push({name: v || ("Gracz "+(i+1)), tokens: S.tokensOn?2:0, timeline:[]});
   }
-  S.deck = shuffle(SONGS.map((s,i)=>i)).map(i=>SONGS[i]);
+  S.deck = shuffle([...SETS[S.set].songs]);
   S.discard = [];
   S.players.forEach(p => p.timeline.push(draw()));
   S.cur = 0;
@@ -698,6 +838,7 @@ function newTurn(){
   S.claims = false;
   S.slot = null;
   S.screen = "turn";
+  triedFresh = false;
   prefetchPreview();
   render();
 }
@@ -729,6 +870,7 @@ function skipSong(cost){
     p.tokens -= cost;
   }
   stopPreview();
+  triedFresh = false;
   S.discard.push(S.song);
   S.song = draw();
   prefetchPreview();
@@ -745,6 +887,9 @@ function bind(){
     on("tMinus", ()=>{ S.target=Math.max(4,S.target-1); $("#tNum").textContent=S.target; });
     on("tPlus",  ()=>{ S.target=Math.min(15,S.target+1); $("#tNum").textContent=S.target; });
     on("tokTgl", ()=>{ S.tokensOn=!S.tokensOn; $("#tokTgl").classList.toggle("on",S.tokensOn); });
+    document.querySelectorAll("[data-set]").forEach(b=>{
+      b.onclick = ()=>{ S.set = b.dataset.set; render(); };
+    });
     on("soundTest", runSoundTest);
     on("start", startGame);
   }
@@ -752,7 +897,7 @@ function bind(){
     on("toListen", ()=>{
       S.screen="listen"; render();
       // auto-start, jeśli fragment już gotowy (tap = gest użytkownika)
-      if(typeof S.preview === "string") playPreview();
+      if(Array.isArray(S.preview) && S.preview.length) playPreview();
     });
     on("freeCard", ()=>{
       const p = S.players[S.cur];
@@ -800,7 +945,7 @@ function bind(){
   if(S.screen==="win"){
     on("again", ()=>{
       S.players.forEach(p=>{ p.timeline=[]; p.tokens=S.tokensOn?2:0; });
-      S.deck = shuffle(SONGS.map((s,i)=>i)).map(i=>SONGS[i]);
+      S.deck = shuffle([...SETS[S.set].songs]);
       S.discard=[];
       S.players.forEach(p=>p.timeline.push(draw()));
       S.cur=0; newTurn();
